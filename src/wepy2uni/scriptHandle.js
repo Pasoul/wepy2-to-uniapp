@@ -77,12 +77,17 @@ function requireHandle(path, fileDir) {
 /**
  * 组件模板处理
  */
-const componentTemplateBuilder = function(ast, vistors, filePath, isApp) {
+const componentTemplateBuilder = function(
+  ast,
+  vistors,
+  filePath,
+  isApp,
+  importComponents
+) {
   let buildRequire = null;
 
   //非app.js文件
   buildRequire = template(componentTemplate);
-
   ast = buildRequire({
     PROPS: arrayToObject(vistors.props.getData(), "props"),
     DATA: arrayToObject(vistors.data.getData(), "data"),
@@ -140,84 +145,91 @@ const componentTemplateBuilder = function(ast, vistors, filePath, isApp) {
     }
   }
   let fileDir = path.dirname(filePath);
-
   traverse(ast, {
     noScope: true,
-    ImportDeclaration(path) {
-      requireHandle(path, fileDir);
-    },
-    ObjectMethod(path) {
-      const name = path.node.key.name;
-      if (name === "data") {
-        //将require()里的地址都处理一遍
-        traverse(path.node, {
-          noScope: true,
-          CallExpression(path2) {
-            requireHandle(path2, fileDir);
-          },
-        });
-
-        let liftCycleArr = vistors.lifeCycle.getData();
-        //逆序一下
-        liftCycleArr = liftCycleArr.reverse();
-        for (let key in liftCycleArr) {
-          // console.log(liftCycleArr[key]);
-          path.insertAfter(liftCycleArr[key]);
-        }
-        //停止，不往后遍历了
-        path.skip();
-      }
-    },
-
     ObjectProperty(path) {
-      // const name = path.node.key.name;
-      // console.log("--------", path);
-      // console.log("--------", path);
-      // if (name === "mixins") {
-      //     console.log("--------", path);
-      //     console.log("--------", path);
-      //     var aa = t.arrayExpression(vistors.mixins.getData());
-      //     path.node.value = aa;
-      //     // let mixinsArr = vistors.mixins.getData();
-      //     // for (let key in mixinsArr) {
-      //     // 	path.insertAfter(mixinsArr[key]);
-      //     // }
-      // }
-    },
-    CallExpression(path) {
-      let callee = path.node.callee;
-      //将wx.createWorker('workers/fib/index.js')转为wx.createWorker('./static/workers/fib/index.js');
-      if (t.isMemberExpression(callee)) {
-        let object = callee.object;
-        let property = callee.property;
-        if (
-          t.isIdentifier(object, { name: "wx" }) &&
-          t.isIdentifier(property, { name: "createWorker" })
-        ) {
-          let arguments = path.node.arguments;
-          if (arguments && arguments.length > 0) {
-            let val = arguments[0].value;
-            arguments[0] = t.stringLiteral("./static/" + val);
+      const name = path.node.key.name;
+      switch (name) {
+        case "components":
+          importComponents.forEach((item) => {
+            path.node.value.properties.push(item);
+          });
+          let liftCycleArr = vistors.lifeCycle.getData();
+          for (let key in liftCycleArr) {
+            path.insertAfter(liftCycleArr[key]);
           }
-        }
-      } else {
-        requireHandle(path, fileDir);
+          break;
       }
     },
   });
+  // traverse(ast, {
+  //   noScope: true,
+  //   ImportDeclaration(path) {
+  //     requireHandle(path, fileDir);
+  //   },
+  //   ObjectMethod(path) {
+  //     const name = path.node.key.name;
+  //     if (name === "data") {
+  //       //将require()里的地址都处理一遍
+  //       traverse(path.node, {
+  //         noScope: true,
+  //         CallExpression(path2) {
+  //           requireHandle(path2, fileDir);
+  //         },
+  //       });
+
+  //       let liftCycleArr = vistors.lifeCycle.getData();
+  //       //逆序一下
+  //       liftCycleArr = liftCycleArr.reverse();
+  //       for (let key in liftCycleArr) {
+  //         // console.log(liftCycleArr[key]);
+  //         path.insertAfter(liftCycleArr[key]);
+  //       }
+  //       //停止，不往后遍历了
+  //       path.skip();
+  //     }
+  //   },
+
+  //   ObjectProperty(path) {
+  //     // const name = path.node.key.name;
+  //     // console.log("--------", path);
+  //     // console.log("--------", path);
+  //     // if (name === "mixins") {
+  //     //     console.log("--------", path);
+  //     //     console.log("--------", path);
+  //     //     var aa = t.arrayExpression(vistors.mixins.getData());
+  //     //     path.node.value = aa;
+  //     //     // let mixinsArr = vistors.mixins.getData();
+  //     //     // for (let key in mixinsArr) {
+  //     //     // 	path.insertAfter(mixinsArr[key]);
+  //     //     // }
+  //     // }
+  //   },
+  //   CallExpression(path) {
+  //     let callee = path.node.callee;
+  //     //将wx.createWorker('workers/fib/index.js')转为wx.createWorker('./static/workers/fib/index.js');
+  //     if (t.isMemberExpression(callee)) {
+  //       let object = callee.object;
+  //       let property = callee.property;
+  //       if (
+  //         t.isIdentifier(object, { name: "wx" }) &&
+  //         t.isIdentifier(property, { name: "createWorker" })
+  //       ) {
+  //         let arguments = path.node.arguments;
+  //         if (arguments && arguments.length > 0) {
+  //           let val = arguments[0].value;
+  //           arguments[0] = t.stringLiteral("./static/" + val);
+  //         }
+  //       }
+  //     } else {
+  //       requireHandle(path, fileDir);
+  //     }
+  //   },
+  // });
   return ast;
 };
 
-/**
- * 处理css文件
- * 1.内部引用的wxss文件修改为css文件
- * 2.修正引用的wxss文件的路径
- *
- * @param {*} fileContent       css文件内容
- * @param {*} file_wxss         当前处理的文件路径
- */
 async function scriptHandle(v, filePath, targetFilePath, isApp) {
-  let styleContent = v.toString();
   try {
     return await new Promise((resolve, reject) => {
       //先反转义
@@ -233,6 +245,35 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
 
       javascriptContent = utils.decode(javascriptContent);
 
+      // 拿json文件的usingComponents，创建import，放到js中
+      const jsonPath = targetFilePath.replace(".vue", ".json");
+      // import的组件要塞到js的components属性中
+      let importComponents = [];
+      if (fs.existsSync(jsonPath) && !isApp) {
+        let jsonContent = fs.readFileSync(jsonPath, "utf8");
+        if (jsonContent) {
+          const formatJsonContent = JSON.parse(jsonContent);
+          const { usingComponents } = formatJsonContent;
+          if (usingComponents) {
+            let importStr = ``;
+            let keys = Object.keys(usingComponents);
+            let values = Object.values(usingComponents);
+            for (let i = 0; i < keys.length; i++) {
+              importStr += `import ${keys[i]} from "${values[i]}"\r\n`;
+              importComponents.push(
+                t.objectProperty(
+                  t.identifier(keys[i]),
+                  t.identifier(keys[i]),
+                  false,
+                  true
+                )
+              );
+            }
+            javascriptContent = importStr + javascriptContent;
+          }
+        }
+      }
+
       // console.log("javascriptContent   --  ", javascriptContent)
       //解析成AST
       javascriptParser.parse(javascriptContent).then((javascriptAst) => {
@@ -246,9 +287,9 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
           convertedJavascript,
           vistors,
           filePath,
-          isApp
+          isApp,
+          importComponents
         );
-
         //生成文本并写入到文件
         let codeText = `<script>\r\n${declareStr}\r\n${
           generate(convertedJavascript).code

@@ -123,7 +123,6 @@ const componentVistor = {
           const arg = path.node.arguments[0];
           arg.properties.forEach((item) => {
             const { name } = item.key;
-            console.log(name);
             switch (name) {
               case "props":
                 vistors.props.handle(item.value);
@@ -150,6 +149,11 @@ const componentVistor = {
               case "config":
                 //处理页面的配置
                 vistors.config.handle(item.value);
+                break;
+              case "onLoad":
+              case "onShow":
+              case "onHide":
+                vistors.lifeCycle.handle(item);
                 break;
               default:
                 break;
@@ -205,9 +209,7 @@ const componentVistor = {
   //         //处理页面的配置
   //         vistors.config.handle(path.node.value);
   //         break;
-  //       case "onLoad":
-  //       case "onShow":
-  //       case "onHide":
+  //       default:
   //         // console.info(path.node.key.name)
   //         vistors.lifeCycle.handle(path.node);
   //         // if (key == "def") {

@@ -15,6 +15,7 @@ const templateHandle = require("./wepy2uni/templateHandle");
 
 const configHandle = require("./wepy2uni/configHandle");
 const vueCliHandle = require("./wepy2uni/vueCliHandle");
+const pageConfigHandle = require("./wepy2uni/pageConfigHandle");
 
 /**
  * 遍历目录
@@ -135,11 +136,21 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
     style: [],
     template: [],
     script: "",
+    json: "",
   };
 
+  // 确保config先被处理，因为config里面的usingComponents要被script使用
+  let values = Object.values(xmlParserObj.childNodes);
+  const index = values.findIndex((item) => item.nodeName === "config");
+
+  if (index > -1) {
+    const config = values[index];
+    values.splice(index, 1);
+    values.unshift(config);
+  }
   //最后根据xml解析出来的节点类型进行不同处理
-  for (let i = 0; i < xmlParserObj.childNodes.length; i++) {
-    let v = xmlParserObj.childNodes[i];
+  for (let i = 0; i < values.length; i++) {
+    let v = values[i];
     // console.log(v);
     if (v.nodeName === "style") {
       let style = await styleHandle(v, filePath, targetFilePath);
@@ -148,6 +159,12 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
     if (v.nodeName === "template") {
       let template = await templateHandle(v, filePath, targetFilePath);
       fileContent.template.push(template);
+    }
+    if (v.nodeName === "config") {
+      /**
+       * config里面所有的内容都单独放到JSON里面
+       */
+      await pageConfigHandle(v, filePath, targetFilePath);
     }
     if (v.nodeName === "script") {
       let script = await scriptHandle(v, filePath, targetFilePath, isApp);

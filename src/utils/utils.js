@@ -313,6 +313,12 @@ var getComponentAlias = function(name) {
   return isReservedTag(name) ? name + "-diy" : name;
 };
 
+// js字符串转JSON字符串
+var jsStringToJson = function(str) {
+  str = JSON.parse(JSON.stringify(str));
+  return JSON.stringify(eval("(" + str + ")"));
+};
+
 module.exports = {
   log,
   isURL,
@@ -327,4 +333,5 @@ module.exports = {
   decode,
   replaceTagAndEventBind,
   restoreTagAndEventBind,
+  jsStringToJson,
 };
