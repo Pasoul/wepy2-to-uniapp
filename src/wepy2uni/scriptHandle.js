@@ -100,51 +100,50 @@ const componentTemplateBuilder = function(
   });
 
   //获取配置
-  let config = vistors.config.getData();
-  let oe = t.objectExpression(config); //需要先转成objectExpression才能转成字符串
-  let code = generate(oe).code;
-  let object = null;
-  try {
-    object = eval("(" + code + ")"); //非标准json，使用JSON.parse()无法转换
-  } catch (error) {
-    console.log("config解析失败，file: " + filePath);
-  }
+  // let config = vistors.config.getData();
+  // let oe = t.objectExpression(config); //需要先转成objectExpression才能转成字符串
+  // let code = generate(oe).code;
+  // let object = null;
+  // try {
+  //   object = eval("(" + code + ")"); //非标准json，使用JSON.parse()无法转换
+  // } catch (error) {
+  //   console.log("config解析失败，file: " + filePath);
+  // }
 
-  if (object) {
-    if (isApp) {
-      global.appConfig = object;
-    } else {
-      let extname = path.extname(filePath).toLowerCase();
-      let fileNameNoExt = pathUtil.getFileNameNoExt(filePath);
-      let relativePath = path.relative(global.sourceFolder, filePath);
-      relativePath = relativePath.split(extname).join("");
-      const key = relativePath.split("\\").join("/");
+  // if (object) {
+  //   if (isApp) {
+  //     // global.appConfig = object;
+  //   } else {
+  //     let extname = path.extname(filePath).toLowerCase();
+  //     let fileNameNoExt = pathUtil.getFileNameNoExt(filePath);
+  //     let relativePath = path.relative(global.sourceFolder, filePath);
+  //     relativePath = relativePath.split(extname).join("");
+  //     const key = relativePath.split("\\").join("/");
 
-      //判断是否有引用自定义组件
-      if (
-        !object.usingComponents ||
-        JSON.stringify(object.usingComponents) == "{}"
-      ) {
-        object.usingComponents = {};
-      }
+  //     //判断是否有引用自定义组件
+  //     if (
+  //       !object.usingComponents ||
+  //       JSON.stringify(object.usingComponents) == "{}"
+  //     ) {
+  //       object.usingComponents = {};
+  //     }
 
-      //处理根路径
-      for (const kk in object.usingComponents) {
-        let value = object.usingComponents[kk];
-        //plugin是微信自定义组件
-        if (value.indexOf("plugin:") == -1) {
-          let fileDir = path.dirname(filePath);
-          value = pathUtil.relativePath(value, global.miniprogramRoot, fileDir);
-          global.pageUsingComponents[kk] = value;
-        }
-      }
+  //     //处理根路径
+  //     for (const kk in object.usingComponents) {
+  //       let value = object.usingComponents[kk];
+  //       //plugin是微信自定义组件
+  //       if (value.indexOf("plugin:") == -1) {
+  //         let fileDir = path.dirname(filePath);
+  //         value = pathUtil.relativePath(value, global.miniprogramRoot, fileDir);
+  //         global.pageUsingComponents[kk] = value;
+  //       }
+  //     }
 
-      delete object.usingComponents;
-      //
-      global.pageConfigs[key] = object;
-    }
-  }
-  let fileDir = path.dirname(filePath);
+  //     delete object.usingComponents;
+  //     //
+  //     global.pageConfigs[key] = object;
+  //   }
+  // }
   traverse(ast, {
     noScope: true,
     ObjectProperty(path) {
@@ -162,6 +161,7 @@ const componentTemplateBuilder = function(
       }
     },
   });
+  // let fileDir = path.dirname(filePath);
   // traverse(ast, {
   //   noScope: true,
   //   ImportDeclaration(path) {

@@ -146,10 +146,10 @@ const componentVistor = {
                 //单独处理
                 vistors.mixins.handle(item.value);
                 break;
-              case "config":
-                //处理页面的配置
-                vistors.config.handle(item.value);
-                break;
+              // case "config":
+              //   //处理页面的配置
+              //   vistors.config.handle(item.value);
+              //   break;
               case "onLoad":
               case "onShow":
               case "onHide":

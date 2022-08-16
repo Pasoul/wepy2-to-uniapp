@@ -17,6 +17,7 @@ const configHandle = require("./wepy2uni/configHandle");
 const vueCliHandle = require("./wepy2uni/vueCliHandle");
 const pageConfigHandle = require("./wepy2uni/pageConfigHandle");
 
+let totalFileCount = 0;
 /**
  * 遍历目录
  * @param {*} folder           当前要遍历的目录，第一次遍历为src目录
@@ -24,11 +25,11 @@ const pageConfigHandle = require("./wepy2uni/pageConfigHandle");
  * @param {*} targetSrcFolder  生成目录下面的src目录
  * @param {*} callback         回调函数
  */
+var count = 0;
 function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
   fs.readdir(folder, function(err, files) {
-    var count = 0;
     var checkEnd = function() {
-      ++count == files.length && callback();
+      ++count >= totalFileCount && callback();
     };
     var tFolder = path.join(
       targetSrcFolder,
@@ -40,7 +41,7 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
       var fileDir = path.join(folder, fileName);
       // 编译目标目录新文件名
       let newfileDir = path.join(tFolder, fileName);
-      fs.stat(fileDir, function(err, stats) {
+      fs.stat(fileDir, async function(err, stats) {
         // 如果文件依然是目录，则递归遍历
         if (stats.isDirectory()) {
           fs.mkdirSync(newfileDir);
@@ -90,7 +91,7 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                 let data_wpy = fs.readFileSync(fileDir, "utf8");
                 let targetFile = path.join(tFolder, fileNameNoExt + ".vue");
                 if (data_wpy) {
-                  filesHandle(data_wpy, fileDir, targetFile, isApp);
+                  await filesHandle(data_wpy, fileDir, targetFile, isApp);
                 }
                 break;
               default:
@@ -104,7 +105,7 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
     });
 
     //为空时直接回调
-    files.length === 0 && callback();
+    // files.length === 0 && callback();
   });
 }
 
@@ -164,7 +165,7 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
       /**
        * config里面所有的内容都单独放到JSON里面
        */
-      await pageConfigHandle(v, filePath, targetFilePath);
+      await pageConfigHandle(v, filePath, targetFilePath, isApp);
     }
     if (v.nodeName === "script") {
       let script = await scriptHandle(v, filePath, targetFilePath, isApp);
@@ -246,20 +247,23 @@ async function transform(sourceFolder, targetFolder) {
   if (!fs.existsSync(global.targetSrcFolder))
     fs.mkdirSync(global.targetSrcFolder);
 
-  traverseFolder(
-    miniprogramRoot,
-    miniprogramRoot,
-    global.targetSrcFolder,
-    () => {
-      configHandle(
-        global.appConfig,
-        global.pageConfigs,
-        global.miniprogramRoot,
-        global.targetSrcFolder
-      );
-      vueCliHandle(configData, global.targetFolder, global.targetSrcFolder);
-    }
-  );
+  fs.readdir(miniprogramRoot, (err, files) => {
+    totalFileCount = files.length;
+    traverseFolder(
+      miniprogramRoot,
+      miniprogramRoot,
+      global.targetSrcFolder,
+      () => {
+        configHandle(
+          global.appConfig,
+          global.pageConfigs,
+          global.miniprogramRoot,
+          global.targetSrcFolder
+        );
+        vueCliHandle(configData, global.targetFolder, global.targetSrcFolder);
+      }
+    );
+  });
 }
 
 module.exports = transform;

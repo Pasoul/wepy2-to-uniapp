@@ -1,13 +1,9 @@
 const fs = require("fs");
 const utils = require("../utils/utils");
+const pathUtil = require("../utils/pathUtil.js");
+const path = require("path");
 
-async function pageConfigHandle(
-  v,
-  filePath,
-  targetFilePath,
-  isApp,
-  fileNameNoExt
-) {
+async function pageConfigHandle(v, filePath, targetFilePath, isApp) {
   let fileText = v.toString();
   try {
     return new Promise((resolve, reject) => {
@@ -15,13 +11,24 @@ async function pageConfigHandle(
         _,
         content
       ) {
-        fs.writeFile(
-          targetFilePath.replace(".vue", ".json"),
-          utils.jsStringToJson(content),
-          () => {
-            resolve();
+        const str = utils.jsStringToJson(content);
+        fs.writeFile(targetFilePath.replace(".vue", ".json"), str, () => {
+          if (isApp) {
+            global.appConfig = JSON.parse(str);
+          } else {
+            let extname = path.extname(filePath).toLowerCase();
+            let relativePath = path.relative(
+              `${global.sourceFolder}/src`,
+              filePath
+            );
+            relativePath = relativePath.split(extname).join("");
+            const key = relativePath.split("\\").join("/");
+            let jsonObj = JSON.parse(str);
+            delete jsonObj["usingComponents"];
+            global.pageConfigs[key] = jsonObj;
           }
-        );
+          resolve();
+        });
       });
     });
   } catch (error) {
