@@ -19,7 +19,8 @@ class JavascriptParser {
       .replace(/super\(\);?/gm, "")
       .replace(/import\s+wepy\s+from\s+['"]@wepy\/core['"];?/gm, "")
       .replace(/import\s+['"](wepy.*?)['"];?/gm, "")
-      .replace(/import.*?from\s+['"]wepy-.*?['"];?/gm, "");
+      .replace(/import.*?from\s+['"]wepy-.*?['"];?/gm, "")
+      .replace(/@wepy\/x/gm, "vuex");
   }
   /**
    * 文本内容解析成AST

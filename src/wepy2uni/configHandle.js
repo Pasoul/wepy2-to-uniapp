@@ -41,6 +41,7 @@ async function configHandle(
        * ]
        */
       let pages = [];
+      // 处理page
       for (const key in appConfig.pages) {
         let pagePath = appConfig.pages[key];
         let pageInfo = pageConfigs[pagePath];
@@ -50,8 +51,22 @@ async function configHandle(
         };
         pages.push(obj);
       }
+      // 处理subpackages
+      const subpackages = [];
+      for (const k in appConfig.subpackages) {
+        const item = appConfig.subpackages[k];
+        const newItem = {
+          ...item,
+          pages: [],
+        };
+        for (const i in item.pages) {
+          newItem.pages.push({ path: item.pages[i] });
+        }
+        subpackages.push(newItem);
+      }
 
       appConfig.pages = pages;
+      appConfig.subpackages = subpackages;
 
       //替换window节点为globalStyle
       appConfig["globalStyle"] = appConfig["window"];
@@ -71,12 +86,21 @@ async function configHandle(
       //tabBar节点
       //将iconPath引用的图标路径进行修复
       let tabBar = appConfig["tabBar"];
+      // 拷贝一份icon到static目录
+      fs.copySync(
+        path.join(global.sourceFolder, "src/images/tabIcons"),
+        path.join(global.targetSrcFolder, "static/tabIcons")
+      );
       if (tabBar && tabBar.list && tabBar.list.length) {
         for (const key in tabBar.list) {
           let item = tabBar.list[key];
-          if (item.iconPath) item.iconPath = "./" + item.iconPath;
+          if (item.iconPath)
+            item.iconPath = item.iconPath.replace("/images", "static");
           if (item.selectedIconPath)
-            item.selectedIconPath = "./" + item.selectedIconPath;
+            item.selectedIconPath = item.selectedIconPath.replace(
+              "/images",
+              "static"
+            );
         }
       }
 
