@@ -32,7 +32,14 @@ async function configHandle(
         ...global.globalUsingComponents,
       };
 
-      //将pages节点里的数据，提取routerData对应的标题，写入到pages节点里
+      /**
+       * appConfig.pages: ["pages/auth", "pages/home"]
+       * pageConfigs: [
+       *  {
+       *    "pages/auth": { navigationBarTitle: 'xxx' }
+       *  }
+       * ]
+       */
       let pages = [];
       for (const key in appConfig.pages) {
         let pagePath = appConfig.pages[key];
@@ -53,9 +60,13 @@ async function configHandle(
       //usingComponents节点，上面删除缓存，这里删除
       delete appConfig["usingComponents"];
 
+      // 删除plugins
+      let appPlugins = appConfig["plugins"];
+      delete appConfig["plugins"];
+
       //workers处理，简单处理一下
-      if (appConfig["workers"])
-        appConfig["workers"] = "static/" + appConfig["workers"];
+      // if (appConfig["workers"])
+      //   appConfig["workers"] = "static/" + appConfig["workers"];
 
       //tabBar节点
       //将iconPath引用的图标路径进行修复
@@ -63,15 +74,9 @@ async function configHandle(
       if (tabBar && tabBar.list && tabBar.list.length) {
         for (const key in tabBar.list) {
           let item = tabBar.list[key];
-          /**
-           * 目前已知的规则：
-           * iconPath和selectedIconPath字段是使用/images下面的文件
-           * 而 /pages/images下面的文件是用于页面里的
-           * 其余情况后面发现再加入
-           */
-          if (item.iconPath) item.iconPath = "./static/" + item.iconPath;
+          if (item.iconPath) item.iconPath = "./" + item.iconPath;
           if (item.selectedIconPath)
-            item.selectedIconPath = "./static/" + item.selectedIconPath;
+            item.selectedIconPath = "./" + item.selectedIconPath;
         }
       }
 
@@ -93,9 +98,19 @@ async function configHandle(
 
       //这里还需要研究一下下~~~~
       let file_package = path.join(global.sourceFolder, "package.json");
+      let project_config_json = path.join(
+        global.sourceFolder,
+        "project.config.json"
+      );
       let packageJson = {};
+      let projectConfigJson = {};
       if (fs.existsSync(file_package)) {
         packageJson = fs.readJsonSync(file_package);
+      } else {
+        console.log("找不到package.json");
+      }
+      if (fs.existsSync(project_config_json)) {
+        projectConfigJson = fs.readJsonSync(project_config_json);
       } else {
         console.log("找不到package.json");
       }
@@ -106,10 +121,11 @@ async function configHandle(
       if (fs.existsSync(file_manifest)) {
         manifestJson = fs.readJsonSync(file_manifest);
         //
-        manifestJson.name = packageJson.name || "";
-        manifestJson.description = packageJson.description || "";
-        manifestJson.versionName = packageJson.version || "1.0.0";
-        manifestJson["mp-weixin"].appid = packageJson.appid || "";
+        manifestJson.name = projectConfigJson.projectname || "";
+        manifestJson.description = projectConfigJson.description || "";
+        manifestJson.versionName = projectConfigJson.version || "1.0.0";
+        manifestJson["mp-weixin"].appid = projectConfigJson.appid || "";
+        manifestJson["mp-weixin"].plugins = appPlugins;
       } else {
         console.log("找不到manifest.json");
       }

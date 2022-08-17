@@ -258,11 +258,13 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
         let keys = Object.keys(usingComponents);
         let values = Object.values(usingComponents);
         for (let i = 0; i < keys.length; i++) {
-          importStr += `import ${keys[i]} from "${values[i]}"\r\n`;
+          // 中划线转驼峰
+          const toCamelKey = utils.toCamel2(keys[i]);
+          importStr += `import ${toCamelKey} from "${values[i]}"\r\n`;
           importComponents.push(
             t.objectProperty(
-              t.identifier(keys[i]),
-              t.identifier(keys[i]),
+              t.identifier(toCamelKey),
+              t.identifier(toCamelKey),
               false,
               true
             )

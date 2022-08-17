@@ -26,11 +26,12 @@ let totalFileCount = 0;
  * @param {*} targetSrcFolder  生成目录下面的src目录
  * @param {*} callback         回调函数
  */
-var count = 0;
+var count = 1;
 function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
   fs.readdir(folder, function(err, files) {
     var checkEnd = function() {
-      ++count >= totalFileCount && callback();
+      count = count + 1;
+      count >= totalFileCount && callback();
     };
     var tFolder = path.join(
       targetSrcFolder,
@@ -174,15 +175,15 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
     }
   }
   //
-  let content = "\uFEFF"; // BOM
   content =
-    fileContent.template.join("\r\n") +
+    utils.replaceEndTag(fileContent.template.join("\r\n")) +
     fileContent.script +
     fileContent.style.join("\r\n");
 
   const newContent = prettier.format(content, {
     parser: "vue",
   });
+  // fs.writeFile()方法只能用来创建文件，不能用来创建路径。
   fs.writeFileSync(targetFile, newContent, () => {
     console.log(`Convert file ${fileName}.wpy success!`);
   });
@@ -241,33 +242,32 @@ async function transform(sourceFolder, targetFolder) {
 
   utils.log("outputFolder = " + global.targetFolder, "log");
   utils.log("targetFolder = " + global.targetFolder, "log");
-
+  // 先清空编译目录
   if (fs.existsSync(global.targetFolder)) {
     pathUtil.emptyDirSyncEx(global.targetFolder, "node_modules");
   } else {
     fs.mkdirSync(global.targetFolder);
   }
   utils.sleep(400);
-  if (!fs.existsSync(global.targetSrcFolder))
+  if (!fs.existsSync(global.targetSrcFolder)) {
     fs.mkdirSync(global.targetSrcFolder);
-
-  fs.readdir(miniprogramRoot, (err, files) => {
-    totalFileCount = files.length;
-    traverseFolder(
-      miniprogramRoot,
-      miniprogramRoot,
-      global.targetSrcFolder,
-      () => {
-        configHandle(
-          global.appConfig,
-          global.pageConfigs,
-          global.miniprogramRoot,
-          global.targetSrcFolder
-        );
-        vueCliHandle(configData, global.targetFolder, global.targetSrcFolder);
-      }
-    );
-  });
+  }
+  totalFileCount = pathUtil.readFileList(miniprogramRoot, []).length;
+  traverseFolder(
+    miniprogramRoot,
+    miniprogramRoot,
+    global.targetSrcFolder,
+    () => {
+      console.log("被执行了");
+      configHandle(
+        global.appConfig,
+        global.pageConfigs,
+        global.miniprogramRoot,
+        global.targetSrcFolder
+      );
+      vueCliHandle(configData, global.targetFolder, global.targetSrcFolder);
+    }
+  );
 }
 
 module.exports = transform;

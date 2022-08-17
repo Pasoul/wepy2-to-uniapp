@@ -95,6 +95,23 @@ function replaceTagAndEventBind(fileText) {
 }
 
 /**
+ * 还原被替换的属性
+ * @param {*} fileText  wpy文件内容
+ */
+function restoreTagAndEventBind(fileText) {
+  // .replace(/ *xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"/g, "")
+  fileText = decode(fileText)
+    .replace(/ a-_-a(.*?)=/g, " @$1=")
+    .replace(/ wx-_-wx/g, " wx:")
+    .replace(/ dot-_-dot/g, " :")
+    .replace(/ dot-_-dot/g, " :");
+
+  //去掉命名空间，没想到其他好办法
+  fileText = decode(fileText).replace(/ xmlns:(.*?)="" /g, " ");
+  return fileText;
+}
+
+/**
  * 感谢转转大佬(Suoyong Zhang)提供代码，有点尴尬，转过来又转过去。。
  * @param {*} content
  */
@@ -114,22 +131,6 @@ function replaceTagAndEventBind(fileText) {
 //         });
 //     });
 // }
-
-/**
- * 还原被替换的属性
- * @param {*} fileText  wpy文件内容
- */
-function restoreTagAndEventBind(fileText) {
-  // .replace(/ *xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"/g, "")
-  fileText = decode(fileText)
-    .replace(/ a-_-a(.*?)=/g, " @$1=")
-    .replace(/ wx-_-wx/g, " wx:")
-    .replace(/ dot-_-dot/g, " :");
-
-  //去掉命名空间，没想到其他好办法
-  fileText = decode(fileText).replace(/ xmlns:(.*?)="" /g, " ");
-  return fileText;
-}
 
 /**
  * xml dom 对 TEXT_NODE 和 ATTRIBUTE_NODE 进行转义。
@@ -319,6 +320,14 @@ var jsStringToJson = function(str) {
   return JSON.stringify(eval("(" + str + ")"));
 };
 
+// 替换vue闭合标签
+var replaceEndTag = function(str) {
+  return str
+    .replace(/><\/input>/g, "/>")
+    .replace(/><\/img>/g, "/>")
+    .replace(/><\/image>/g, "/>");
+};
+
 module.exports = {
   log,
   isURL,
@@ -334,4 +343,5 @@ module.exports = {
   replaceTagAndEventBind,
   restoreTagAndEventBind,
   jsStringToJson,
+  replaceEndTag,
 };

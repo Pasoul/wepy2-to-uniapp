@@ -14,14 +14,18 @@ async function pageConfigHandle(v, filePath, targetFilePath, isApp) {
         _,
         content
       ) {
+        content = utils.restoreTagAndEventBind(content);
         const str = utils.jsStringToJson(content);
         if (isApp) {
           global.appConfig = JSON.parse(str);
         } else {
           let route = pathUtil.getRouteByFilePath(filePath);
           let jsonObj = JSON.parse(str);
-          global.pageUsingComponents[route] = jsonObj["usingComponents"];
-          delete jsonObj["usingComponents"];
+          if (jsonObj["usingComponents"]) {
+            global.pageUsingComponents[route] = jsonObj["usingComponents"];
+            delete jsonObj["usingComponents"];
+          }
+
           global.pageConfigs[route] = jsonObj;
         }
         resolve();
