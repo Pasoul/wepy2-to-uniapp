@@ -7,21 +7,37 @@ const clone = require("clone");
 const template = require("@babel/template").default;
 
 const lifeCycleFunction = {
+  // App生命周期
+  onLaunch: true,
+  onError: true,
+  onPageNotFound: true,
+  onUnhandledRejection: true,
+  onThemeChange: true,
+  // 页面生命周期
   onLoad: true,
   onReady: true,
   onShow: true,
   onHide: true,
   onUnload: true,
+  onUnload: true,
+
+  // 页面事件处理函数
   onPullDownRefresh: true,
   onReachBottom: true,
+  onPageScroll: true,
+  onAddToFavorites: true,
   onShareAppMessage: true,
-  onLaunch: true,
-  //
-  methods: true,
-  loaded: true,
-  onUnload: true,
-  globalData: true,
-  // submit:true,
+  onShareTimeline: true,
+  onResize: true,
+  onTabItemTap: true,
+  onSaveExitState: true,
+
+  // 组件生命周期
+  created: true,
+  attached: true,
+  ready: true,
+  moved: true,
+  detached: true,
 };
 
 var vistors = {
@@ -146,16 +162,10 @@ const componentVistor = {
                 //单独处理
                 vistors.mixins.handle(item.value);
                 break;
-              // case "config":
-              //   //处理页面的配置
-              //   vistors.config.handle(item.value);
-              //   break;
-              case "onLoad":
-              case "onShow":
-              case "onHide":
-                vistors.lifeCycle.handle(item);
-                break;
               default:
+                if (lifeCycleFunction[name]) {
+                  vistors.lifeCycle.handle(item);
+                }
                 break;
             }
           });

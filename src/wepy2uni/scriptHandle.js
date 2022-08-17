@@ -154,6 +154,8 @@ const componentTemplateBuilder = function(
             path.node.value.properties.push(item);
           });
           let liftCycleArr = vistors.lifeCycle.getData();
+          //逆序一下
+          liftCycleArr = liftCycleArr.reverse();
           for (let key in liftCycleArr) {
             path.insertAfter(liftCycleArr[key]);
           }
