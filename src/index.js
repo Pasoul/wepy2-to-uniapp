@@ -16,6 +16,7 @@ const templateHandle = require("./wepy2uni/templateHandle");
 const configHandle = require("./wepy2uni/configHandle");
 const vueCliHandle = require("./wepy2uni/vueCliHandle");
 const pageConfigHandle = require("./wepy2uni/pageConfigHandle");
+const prettier = require("prettier");
 
 let totalFileCount = 0;
 /**
@@ -179,7 +180,10 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
     fileContent.script +
     fileContent.style.join("\r\n");
 
-  fs.writeFileSync(targetFile, content, () => {
+  const newContent = prettier.format(content, {
+    parser: "vue",
+  });
+  fs.writeFileSync(targetFile, newContent, () => {
     console.log(`Convert file ${fileName}.wpy success!`);
   });
 }

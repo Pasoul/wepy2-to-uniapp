@@ -245,33 +245,28 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
 
       javascriptContent = utils.decode(javascriptContent);
 
-      // 拿json文件的usingComponents，创建import，放到js中
-      const jsonPath = targetFilePath.replace(".vue", ".json");
+      // 拿到页面的usingComponents，创建import，放到js中
+
+      let route = pathUtil.getRouteByFilePath(filePath);
       // import的组件要塞到js的components属性中
       let importComponents = [];
-      if (fs.existsSync(jsonPath) && !isApp) {
-        let jsonContent = fs.readFileSync(jsonPath, "utf8");
-        if (jsonContent) {
-          const formatJsonContent = JSON.parse(jsonContent);
-          const { usingComponents } = formatJsonContent;
-          if (usingComponents) {
-            let importStr = ``;
-            let keys = Object.keys(usingComponents);
-            let values = Object.values(usingComponents);
-            for (let i = 0; i < keys.length; i++) {
-              importStr += `import ${keys[i]} from "${values[i]}"\r\n`;
-              importComponents.push(
-                t.objectProperty(
-                  t.identifier(keys[i]),
-                  t.identifier(keys[i]),
-                  false,
-                  true
-                )
-              );
-            }
-            javascriptContent = importStr + javascriptContent;
-          }
+      let usingComponents = global.pageUsingComponents[route];
+      if (usingComponents) {
+        let importStr = ``;
+        let keys = Object.keys(usingComponents);
+        let values = Object.values(usingComponents);
+        for (let i = 0; i < keys.length; i++) {
+          importStr += `import ${keys[i]} from "${values[i]}"\r\n`;
+          importComponents.push(
+            t.objectProperty(
+              t.identifier(keys[i]),
+              t.identifier(keys[i]),
+              false,
+              true
+            )
+          );
         }
+        javascriptContent = importStr + javascriptContent;
       }
 
       // console.log("javascriptContent   --  ", javascriptContent)

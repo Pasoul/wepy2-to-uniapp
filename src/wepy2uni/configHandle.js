@@ -5,6 +5,7 @@ const generate = require("@babel/generator").default;
 
 const utils = require("../utils/utils.js");
 const pathUtil = require("../utils/pathUtil.js");
+const prettier = require("prettier");
 
 /**
  * 处理配置文件
@@ -76,7 +77,13 @@ async function configHandle(
 
       //写入pages.json
       let file_pages = path.join(targetSrcFolder, "pages.json");
-      fs.writeFile(file_pages, JSON.stringify(appConfig, null, "\t"), () => {
+      let newAppConfig = prettier.format(
+        JSON.stringify(appConfig, null, "\t"),
+        {
+          parser: "json",
+        }
+      );
+      fs.writeFile(file_pages, newAppConfig, () => {
         console.log(
           `write ${path.relative(global.targetFolder, file_pages)} success!`
         );
