@@ -89,8 +89,8 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                 let data_wpy = fs.readFileSync(fileDir, "utf8");
                 // 解决wepy文件template标签>换行问题，此问题会导致生成的vue标签无法正常
                 data_wpy = prettier.format(data_wpy, {
-                  bracketSameLine: true,
-                  jsxBracketSameLine: true
+                  parser: "vue",
+                  htmlWhitespaceSensitivity: "ignore"
                 })
                 console.log(data_wpy);
                 let targetFile = path.join(tFolder, fileNameNoExt + ".vue");
@@ -156,7 +156,7 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
   //最后根据xml解析出来的节点类型进行不同处理
   for (let i = 0; i < values.length; i++) {
     let v = values[i];
-    // console.log(v);
+    console.log(v.nodeName);
     if (v.nodeName === "style") {
       let style = await styleHandle(v, filePath, targetFilePath);
       fileContent.style.push(style);

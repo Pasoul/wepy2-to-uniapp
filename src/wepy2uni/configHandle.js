@@ -91,7 +91,7 @@ async function configHandle(
         global.sourceFolder,
         "src/images/tabIcons"
       );
-      const targetTabIcons = path.join(global.sourceFolder, "static/tabIcons");
+      const targetTabIcons = path.join(global.targetSrcFolder, "static/tabIcons");
       if (fs.existsSync(sourceTabIcons)) {
         fs.copySync(sourceTabIcons, targetTabIcons);
       }
