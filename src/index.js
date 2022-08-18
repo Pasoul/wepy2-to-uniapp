@@ -92,7 +92,6 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                   parser: "vue",
                   htmlWhitespaceSensitivity: "ignore"
                 })
-                console.log(data_wpy);
                 let targetFile = path.join(tFolder, fileNameNoExt + ".vue");
                 if (data_wpy) {
                   await filesHandle(data_wpy, fileDir, targetFile, isApp);
@@ -156,7 +155,6 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
   //最后根据xml解析出来的节点类型进行不同处理
   for (let i = 0; i < values.length; i++) {
     let v = values[i];
-    console.log(v.nodeName);
     if (v.nodeName === "style") {
       let style = await styleHandle(v, filePath, targetFilePath);
       fileContent.style.push(style);
