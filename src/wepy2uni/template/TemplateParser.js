@@ -42,7 +42,7 @@ class TemplateParser {
     ast.forEach(item => {
       if (item.type === 'text') {
         str += item.data;
-      } else if (item.type === 'tag') {
+      } else if (item.type === 'tag' && item.name !== 'config') {
         str += '<' + item.name;
         if (item.attribs) {
           Object.keys(item.attribs).forEach(attr => {

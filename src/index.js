@@ -26,7 +26,7 @@ let totalFileCount = 0;
  * @param {*} targetSrcFolder  生成目录下面的src目录
  * @param {*} callback         回调函数
  */
-var count = 1;
+var count = 0;
 function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
   fs.readdir(folder, function(err, files) {
     var checkEnd = function() {
@@ -66,10 +66,6 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                 // js文件直接复制到编译目标目录
                 fs.copySync(fileDir, newfileDir);
                 let data_js = fs.readFileSync(fileDir, "utf8");
-                // 移除js里面wepy/core的引用
-                data_js = data_js
-                  .replace(/import\s+wepy\s+from\s+['"]@wepy\/core['"];?/gm, "")
-                  .replace("@wepy/x", "vuex");
                 // let eventHub = new wepy()改为 let eventHub = new Vue()
                 data_js = data_js.replace(
                   /let\s+eventHub\s+=\s+new\s+wepy\(\);?/gm,
@@ -91,6 +87,12 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                   fileNameNoExt = "App";
                 }
                 let data_wpy = fs.readFileSync(fileDir, "utf8");
+                // 解决wepy文件template标签>换行问题，此问题会导致生成的vue标签无法正常
+                data_wpy = prettier.format(data_wpy, {
+                  bracketSameLine: true,
+                  jsxBracketSameLine: true
+                })
+                console.log(data_wpy);
                 let targetFile = path.join(tFolder, fileNameNoExt + ".vue");
                 if (data_wpy) {
                   await filesHandle(data_wpy, fileDir, targetFile, isApp);

@@ -87,10 +87,15 @@ async function configHandle(
       //将iconPath引用的图标路径进行修复
       let tabBar = appConfig["tabBar"];
       // 拷贝一份icon到static目录
-      fs.copySync(
-        path.join(global.sourceFolder, "src/images/tabIcons"),
-        path.join(global.targetSrcFolder, "static/tabIcons")
+      const sourceTabIcons = path.join(
+        global.sourceFolder,
+        "src/images/tabIcons"
       );
+      const targetTabIcons = path.join(global.sourceFolder, "static/tabIcons");
+      if (fs.existsSync(sourceTabIcons)) {
+        fs.copySync(sourceTabIcons, targetTabIcons);
+      }
+
       if (tabBar && tabBar.list && tabBar.list.length) {
         for (const key in tabBar.list) {
           let item = tabBar.list[key];

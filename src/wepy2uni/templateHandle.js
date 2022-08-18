@@ -11,6 +11,7 @@ const templateConverter = require("./template/templateConverter");
 
 const utils = require("../utils/utils.js");
 const pathUtil = require("../utils/pathUtil.js");
+const prettier = require('prettier')
 
 /**
  * 判断是否为多根元素模式

@@ -325,7 +325,8 @@ var replaceEndTag = function(str) {
   return str
     .replace(/><\/input>/g, "/>")
     .replace(/><\/img>/g, "/>")
-    .replace(/><\/image>/g, "/>");
+    .replace(/><\/image>/g, "/>")
+    .replace(/><\/br>/g, "/>")
 };
 
 module.exports = {
