@@ -1,36 +1,36 @@
-const fs = require("fs-extra");
-const path = require("path");
+const fs = require('fs-extra')
+const path = require('path')
 
-const utils = require("../utils/utils.js");
-const pathUtil = require("../utils/pathUtil.js");
+const utils = require('../utils/utils.js')
+const pathUtil = require('../utils/pathUtil.js')
 
-const t = require("@babel/types");
-const nodePath = require("path");
-const parse = require("@babel/parser").parse;
-const generate = require("@babel/generator").default;
-const traverse = require("@babel/traverse").default;
+const t = require('@babel/types')
+const nodePath = require('path')
+const parse = require('@babel/parser').parse
+const generate = require('@babel/generator').default
+const traverse = require('@babel/traverse').default
 
-const template = require("@babel/template").default;
+const template = require('@babel/template').default
 
-const componentConverter = require("./script/componentConverter");
-const JavascriptParser = require("./script/JavascriptParser");
+const componentConverter = require('./script/componentConverter')
+const JavascriptParser = require('./script/JavascriptParser')
 
 /**
  * 将ast属性数组组合为ast对象
  * @param {*} pathAry
  */
 function arrayToObject(pathAry, property) {
-  let obj = {};
+  let obj = {}
   switch (property) {
-    case "mixins":
-      obj = t.arrayExpression(pathAry);
-      break;
+    case 'mixins':
+      obj = t.arrayExpression(pathAry)
+      break
     default:
-      obj = t.objectExpression(pathAry);
-      break;
+      obj = t.objectExpression(pathAry)
+      break
   }
 
-  return obj;
+  return obj
 }
 
 /**
@@ -48,7 +48,7 @@ export default {
   computed: COMPUTED,
   watch:WATCH,
 }
-`;
+`
 
 /**
  * 处理require()里的路径
@@ -56,19 +56,15 @@ export default {
  * @param {*} fileDir   当前文件所在目录
  */
 function requireHandle(path, fileDir) {
-  let callee = path.node.callee;
-  if (t.isIdentifier(callee, { name: "require" })) {
+  let callee = path.node.callee
+  if (t.isIdentifier(callee, { name: 'require' })) {
     //处理require()路径
-    let arguments = path.node.arguments;
+    let arguments = path.node.arguments
     if (arguments && arguments.length) {
       if (t.isStringLiteral(arguments[0])) {
-        let filePath = arguments[0].value;
-        filePath = pathUtil.relativePath(
-          filePath,
-          global.miniprogramRoot,
-          fileDir
-        );
-        path.node.arguments[0] = t.stringLiteral(filePath);
+        let filePath = arguments[0].value
+        filePath = pathUtil.relativePath(filePath, global.miniprogramRoot, fileDir)
+        path.node.arguments[0] = t.stringLiteral(filePath)
       }
     }
   }
@@ -77,27 +73,21 @@ function requireHandle(path, fileDir) {
 /**
  * 组件模板处理
  */
-const componentTemplateBuilder = function(
-  ast,
-  vistors,
-  filePath,
-  isApp,
-  importComponents
-) {
-  let buildRequire = null;
+const componentTemplateBuilder = function(ast, vistors, filePath, isApp, importComponents) {
+  let buildRequire = null
 
   //非app.js文件
-  buildRequire = template(componentTemplate);
+  buildRequire = template(componentTemplate)
   ast = buildRequire({
-    PROPS: arrayToObject(vistors.props.getData(), "props"),
-    DATA: arrayToObject(vistors.data.getData(), "data"),
-    MIXINS: arrayToObject(vistors.mixins.getData(), "mixins"),
-    COMPONENTS: arrayToObject(vistors.components.getData(), "components"),
-    METHODS: arrayToObject(vistors.methods.getData(), "methods"),
-    COMPUTED: arrayToObject(vistors.computed.getData(), "computed"),
-    WATCH: arrayToObject(vistors.watch.getData(), "watch"),
+    PROPS: arrayToObject(vistors.props.getData(), 'props'),
+    DATA: arrayToObject(vistors.data.getData(), 'data'),
+    MIXINS: arrayToObject(vistors.mixins.getData(), 'mixins'),
+    COMPONENTS: arrayToObject(vistors.components.getData(), 'components'),
+    METHODS: arrayToObject(vistors.methods.getData(), 'methods'),
+    COMPUTED: arrayToObject(vistors.computed.getData(), 'computed'),
+    WATCH: arrayToObject(vistors.watch.getData(), 'watch'),
     // LIFECYCLE: arrayToObject(vistors.lifeCycle.getData(), "lifeCycle"),
-  });
+  })
 
   //获取配置
   // let config = vistors.config.getData();
@@ -147,22 +137,22 @@ const componentTemplateBuilder = function(
   traverse(ast, {
     noScope: true,
     ObjectProperty(path) {
-      const name = path.node.key.name;
+      const name = path.node.key.name
       switch (name) {
-        case "components":
-          importComponents.forEach((item) => {
-            path.node.value.properties.push(item);
-          });
-          let liftCycleArr = vistors.lifeCycle.getData();
+        case 'components':
+          importComponents.forEach(item => {
+            path.node.value.properties.push(item)
+          })
+          let liftCycleArr = vistors.lifeCycle.getData()
           //逆序一下
-          liftCycleArr = liftCycleArr.reverse();
+          liftCycleArr = liftCycleArr.reverse()
           for (let key in liftCycleArr) {
-            path.insertAfter(liftCycleArr[key]);
+            path.insertAfter(liftCycleArr[key])
           }
-          break;
+          break
       }
     },
-  });
+  })
   // let fileDir = path.dirname(filePath);
   // traverse(ast, {
   //   noScope: true,
@@ -228,8 +218,8 @@ const componentTemplateBuilder = function(
   //     }
   //   },
   // });
-  return ast;
-};
+  return ast
+}
 
 async function scriptHandle(v, filePath, targetFilePath, isApp) {
   try {
@@ -237,68 +227,51 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
       //先反转义
       let javascriptContent = v.childNodes.toString(),
         //初始化一个解析器
-        javascriptParser = new JavascriptParser();
+        javascriptParser = new JavascriptParser()
 
       //去除无用代码
-      javascriptContent = javascriptParser.beforeParse(javascriptContent);
+      javascriptContent = javascriptParser.beforeParse(javascriptContent)
 
       //去掉命名空间及标志
-      javascriptContent = utils.restoreTagAndEventBind(javascriptContent);
+      javascriptContent = utils.restoreTagAndEventBind(javascriptContent)
 
-      javascriptContent = utils.decode(javascriptContent);
+      javascriptContent = utils.decode(javascriptContent)
 
       // 拿到页面的usingComponents，创建import，放到js中
 
-      let route = pathUtil.getRouteByFilePath(filePath);
+      let route = pathUtil.getRouteByFilePath(filePath)
       // import的组件要塞到js的components属性中
-      let importComponents = [];
-      let usingComponents = global.pageUsingComponents[route];
+      let importComponents = []
+      let usingComponents = global.pageUsingComponents[route]
       if (usingComponents) {
-        let importStr = ``;
-        let keys = Object.keys(usingComponents);
-        let values = Object.values(usingComponents);
+        let importStr = ``
+        let keys = Object.keys(usingComponents)
+        let values = Object.values(usingComponents)
         for (let i = 0; i < keys.length; i++) {
           // 中划线转驼峰
-          const toCamelKey = utils.toCamel2(keys[i]);
-          importStr += `import ${toCamelKey} from "${values[i]}"\r\n`;
-          importComponents.push(
-            t.objectProperty(
-              t.identifier(toCamelKey),
-              t.identifier(toCamelKey),
-              false,
-              true
-            )
-          );
+          const toCamelKey = utils.toCamel2(keys[i])
+          const value = values[i].replace(/~@/gm, '@')
+          importStr += `import ${toCamelKey} from "${value}"\r\n`
+          importComponents.push(t.objectProperty(t.identifier(toCamelKey), t.identifier(toCamelKey), false, true))
         }
-        javascriptContent = importStr + javascriptContent;
+        javascriptContent = importStr + javascriptContent
       }
 
       // console.log("javascriptContent   --  ", javascriptContent)
       //解析成AST
-      javascriptParser.parse(javascriptContent).then((javascriptAst) => {
+      javascriptParser.parse(javascriptContent).then(javascriptAst => {
         //进行代码转换
-        let { convertedJavascript, vistors, declareStr } = componentConverter(
-          javascriptAst,
-          isApp
-        );
+        let { convertedJavascript, vistors, declareStr } = componentConverter(javascriptAst, isApp)
         //放到预先定义好的模板中
-        convertedJavascript = componentTemplateBuilder(
-          convertedJavascript,
-          vistors,
-          filePath,
-          isApp,
-          importComponents
-        );
+        convertedJavascript = componentTemplateBuilder(convertedJavascript, vistors, filePath, isApp, importComponents)
         //生成文本并写入到文件
-        let codeText = `<script>\r\n${declareStr}\r\n${
-          generate(convertedJavascript).code
-        }\r\n</script>\r\n`;
-        resolve(codeText);
-      });
-    });
+        let codeText = `<script>\r\n${declareStr}\r\n${generate(convertedJavascript).code}\r\n</script>\r\n`
+        resolve(codeText)
+      })
+    })
   } catch (err) {
-    console.log(err);
+    console.log(err)
   }
 }
 
-module.exports = scriptHandle;
+module.exports = scriptHandle

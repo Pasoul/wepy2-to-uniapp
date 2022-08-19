@@ -58,8 +58,11 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                 // js文件直接复制到编译目标目录
                 fs.copySync(fileDir, newfileDir)
                 let data_js = fs.readFileSync(fileDir, 'utf8')
-                // let eventHub = new wepy()改为 let eventHub = new Vue()
-                data_js = data_js.replace(/let\s+eventHub\s+=\s+new\s+wepy\(\);?/gm, "import Vue from 'vue'; \nlet eventHub = new Vue();")
+                data_js = data_js
+                  .replace(/import\s+Vuex\s+from\s+['"]@wepy\/x['"];?/gm, "import Vuex from 'vuex'")
+                  .replace(/wepy\.use\(Vuex\)/gm, 'Vue.use(vuex)')
+                  .replace(/let\s+eventHub\s+=\s+new\s+wepy\(\);?/gm, "import Vue from 'vue'; \nlet eventHub = new Vue();")
+                  .replace(/import\s+wepy\s+from\s+['"]@wepy\/core['"];?/gm, "import Vue from 'vue'")
                 fs.writeFile(newfileDir, data_js, () => {
                   console.log(`Convert ${path.relative(global.targetFolder, newfileDir)} success!`)
                 })
