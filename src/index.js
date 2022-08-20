@@ -233,7 +233,7 @@ async function transform(sourceFolder, targetFolder) {
   utils.log('targetFolder = ' + global.targetFolder, 'log')
   // 先清空编译目录
   if (fs.existsSync(global.targetFolder)) {
-    pathUtil.emptyDirSyncEx(global.targetFolder, 'node_modules')
+    pathUtil.emptyDirSyncEx(global.targetFolder, ['node_modules', '.git'])
   } else {
     fs.mkdirSync(global.targetFolder)
   }

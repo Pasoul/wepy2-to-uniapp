@@ -1,5 +1,5 @@
-var fs = require("fs");
-var path = require("path");
+var fs = require('fs')
+var path = require('path')
 
 /**
  * 复制文件
@@ -8,27 +8,27 @@ var path = require("path");
  * @param {*} cb      回调函数
  */
 var copyFile = function(srcPath, tarPath, cb) {
-  var rs = fs.createReadStream(srcPath);
-  rs.on("error", function(err) {
+  var rs = fs.createReadStream(srcPath)
+  rs.on('error', function(err) {
     if (err) {
-      console.log("read error", srcPath);
+      console.log('read error', srcPath)
     }
-    cb && cb(err);
-  });
+    cb && cb(err)
+  })
 
-  var ws = fs.createWriteStream(tarPath);
-  ws.on("error", function(err) {
+  var ws = fs.createWriteStream(tarPath)
+  ws.on('error', function(err) {
     if (err) {
-      console.log("write error", tarPath);
+      console.log('write error', tarPath)
     }
-    cb && cb(err);
-  });
-  ws.on("close", function(ex) {
-    cb && cb(ex);
-  });
+    cb && cb(err)
+  })
+  ws.on('close', function(ex) {
+    cb && cb(ex)
+  })
 
-  rs.pipe(ws);
-};
+  rs.pipe(ws)
+}
 
 /**
  * 复制目录
@@ -38,59 +38,59 @@ var copyFile = function(srcPath, tarPath, cb) {
  */
 var copyFolder = function(srcDir, tarDir, cb) {
   fs.readdir(srcDir, function(err, files) {
-    var count = 0;
+    var count = 0
     var checkEnd = function() {
-      ++count == files.length && cb && cb();
-    };
+      ++count == files.length && cb && cb()
+    }
 
     if (err) {
-      checkEnd();
-      return;
+      checkEnd()
+      return
     }
 
     files.forEach(function(file) {
-      var srcPath = path.join(srcDir, file);
-      var tarPath = path.join(tarDir, file);
+      var srcPath = path.join(srcDir, file)
+      var tarPath = path.join(tarDir, file)
 
       fs.stat(srcPath, function(err, stats) {
         if (stats.isDirectory()) {
-          console.log("mkdir", tarPath);
+          console.log('mkdir', tarPath)
           fs.mkdir(tarPath, function(err) {
             if (err) {
-              console.log(err);
-              return;
+              console.log(err)
+              return
             }
 
-            copyFolder(srcPath, tarPath, checkEnd);
-          });
+            copyFolder(srcPath, tarPath, checkEnd)
+          })
         } else {
-          copyFile(srcPath, tarPath, checkEnd);
+          copyFile(srcPath, tarPath, checkEnd)
         }
-      });
-    });
+      })
+    })
 
     //为空时直接回调
-    files.length === 0 && cb && cb();
-  });
-};
+    files.length === 0 && cb && cb()
+  })
+}
 
 /**
  * 删除文件夹
  * @param {*} path  文件夹路径
  */
 function delDir(path) {
-  let files = [];
+  let files = []
   if (fs.existsSync(path)) {
-    files = fs.readdirSync(path);
+    files = fs.readdirSync(path)
     files.forEach((file, index) => {
-      let curPath = path + "/" + file;
+      let curPath = path + '/' + file
       if (fs.statSync(curPath).isDirectory()) {
-        delDir(curPath); //递归删除文件夹
+        delDir(curPath) //递归删除文件夹
       } else {
-        fs.unlinkSync(curPath); //删除文件
+        fs.unlinkSync(curPath) //删除文件
       }
-    });
-    fs.rmdirSync(path);
+    })
+    fs.rmdirSync(path)
   } else {
   }
 }
@@ -100,19 +100,19 @@ function delDir(path) {
  * @param {*} path   要搜索的目录
  * @param {*} ignore 忽略的目录名或文件名，暂只支持全字匹配，有需求再改为正则匹配
  */
-function emptyDirSyncEx(folder, ignore) {
+function emptyDirSyncEx(folder, ignore = []) {
   fs.readdir(folder, function(err, files) {
     files.forEach(function(fileName) {
-      var fileDir = path.join(folder, fileName);
+      var fileDir = path.join(folder, fileName)
       fs.stat(fileDir, function(err, stats) {
         if (stats.isDirectory()) {
-          if (fileName !== ignore) delDir(fileDir);
+          if (!ignore.includes(fileName)) delDir(fileDir)
         } else {
-          if (fileName !== ignore) fs.unlinkSync(fileDir);
+          if (!ignore.includes(fileName)) fs.unlinkSync(fileDir)
         }
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 /**
@@ -120,8 +120,8 @@ function emptyDirSyncEx(folder, ignore) {
  * @param {*} filePath  文件路径
  */
 function getFileNameNoExt(filePath) {
-  let extname = path.extname(filePath);
-  return path.basename(filePath, extname);
+  let extname = path.extname(filePath)
+  return path.basename(filePath, extname)
 }
 
 /**
@@ -130,9 +130,9 @@ function getFileNameNoExt(filePath) {
  */
 function getParentFolderName(filePath) {
   //当前文件上层目录
-  let pFolder = path.dirname(filePath);
+  let pFolder = path.dirname(filePath)
   //粗暴获取上层目录的名称~~~
-  return path.basename(pFolder);
+  return path.basename(pFolder)
 }
 
 /**
@@ -140,12 +140,12 @@ function getParentFolderName(filePath) {
  * @param {*} dirname  目录路径
  */
 function mkdirsSync(dirname) {
-  if (fs.existsSync(dirname)) return true;
+  if (fs.existsSync(dirname)) return true
   if (mkdirsSync(path.dirname(dirname))) {
-    fs.mkdirSync(dirname);
-    return true;
+    fs.mkdirSync(dirname)
+    return true
   }
-  return false;
+  return false
 }
 
 /**
@@ -153,14 +153,14 @@ function mkdirsSync(dirname) {
  * @param {*} dirname  目录路径
  */
 function rmdirsSync(dirname) {
-  if (!fs.existsSync(dirname)) return true;
-  var files = fs.readdirSync(dirname);
-  if (!files) return true;
+  if (!fs.existsSync(dirname)) return true
+  var files = fs.readdirSync(dirname)
+  if (!files) return true
   files.forEach(function(file, index) {
-    var curPath = path.join(dirname, file);
-    if (fs.statSync(curPath).isFile()) fs.unlinkSync(curPath);
-  });
-  return true;
+    var curPath = path.join(dirname, file)
+    if (fs.statSync(curPath).isFile()) fs.unlinkSync(curPath)
+  })
+  return true
 }
 
 /**
@@ -169,15 +169,15 @@ function rmdirsSync(dirname) {
  * @param {*} filePath   要查找的文件
  */
 function isInFolder(folderArr, filePath) {
-  var result = false;
+  var result = false
   for (let index = 0; index < folderArr.length; index++) {
-    const folder = folderArr[index];
+    const folder = folderArr[index]
     if (folder && filePath.indexOf(folder) > -1) {
-      result = true;
-      break;
+      result = true
+      break
     }
   }
-  return result;
+  return result
 }
 /**
  * 路径转换，转换根路径(路径前面为/)和当前路径(无/开头)为相对路径
@@ -186,45 +186,45 @@ function isInFolder(folderArr, filePath) {
  * @param {*} fileDir   当前文件所在目录
  */
 function relativePath(filePath, root, fileDir) {
-  if (!filePath) return filePath;
+  if (!filePath) return filePath
   if (/^\//.test(filePath)) {
     //如果是以/开头的，表示根目录
-    filePath = path.join(root, filePath);
+    filePath = path.join(root, filePath)
   } else {
-    filePath = path.join(fileDir, filePath);
+    filePath = path.join(fileDir, filePath)
   }
 
-  filePath = path.relative(fileDir, filePath);
+  filePath = path.relative(fileDir, filePath)
   if (!/^[\.\/]/.test(filePath)) {
-    filePath = "./" + filePath;
+    filePath = './' + filePath
   }
-  return filePath.split("\\").join("/");
+  return filePath.split('\\').join('/')
 }
 
 /**
  * 根据filePath获取页面路由
  */
 function getRouteByFilePath(filePath) {
-  let extname = path.extname(filePath).toLowerCase();
-  let relativePath = path.relative(`${global.sourceFolder}/src`, filePath);
-  relativePath = relativePath.split(extname).join("");
+  let extname = path.extname(filePath).toLowerCase()
+  let relativePath = path.relative(`${global.sourceFolder}/src`, filePath)
+  relativePath = relativePath.split(extname).join('')
   // key为页面路由，比如pages/auth、pages/home
-  const route = relativePath.split("\\").join("/");
-  return route;
+  const route = relativePath.split('\\').join('/')
+  return route
 }
 // 获取指定目录下的文件个数
 function readFileList(dir, filesList = []) {
-  const files = fs.readdirSync(dir);
+  const files = fs.readdirSync(dir)
   files.forEach((item, index) => {
-    var fullPath = path.join(dir, item);
-    const stat = fs.statSync(fullPath);
+    var fullPath = path.join(dir, item)
+    const stat = fs.statSync(fullPath)
     if (stat.isDirectory()) {
-      readFileList(path.join(dir, item), filesList); //递归读取文件
+      readFileList(path.join(dir, item), filesList) //递归读取文件
     } else {
-      filesList.push(fullPath);
+      filesList.push(fullPath)
     }
-  });
-  return filesList;
+  })
+  return filesList
 }
 
 module.exports = {
@@ -240,4 +240,4 @@ module.exports = {
   emptyDirSyncEx,
   getRouteByFilePath,
   readFileList,
-};
+}
