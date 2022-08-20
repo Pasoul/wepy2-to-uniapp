@@ -59,9 +59,9 @@ function traverseFolder(folder, miniprogramRoot, targetSrcFolder, callback) {
                 fs.copySync(fileDir, newfileDir)
                 let data_js = fs.readFileSync(fileDir, 'utf8')
                 data_js = data_js
-                  .replace(/import\s+Vuex\s+from\s+['"]@wepy\/x['"];?/gm, "import Vuex from 'vuex'")
-                  .replace(/wepy\.use\(Vuex\)/gm, 'Vue.use(vuex)')
-                  .replace(/let\s+eventHub\s+=\s+new\s+wepy\(\);?/gm, "import Vue from 'vue'; \nlet eventHub = new Vue();")
+                  .replace(/@wepy\/x/gm, 'vuex')
+                  .replace(/wepy\.use\(Vuex\)/gm, 'Vue.use(Vuex)')
+                  .replace(/let\s+eventHub\s+=\s+new\s+wepy\(\);?/gm, 'let eventHub = new Vue();')
                   .replace(/import\s+wepy\s+from\s+['"]@wepy\/core['"];?/gm, "import Vue from 'vue'")
                 fs.writeFile(newfileDir, data_js, () => {
                   console.log(`Convert ${path.relative(global.targetFolder, newfileDir)} success!`)

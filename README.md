@@ -73,6 +73,7 @@ uni-app 里并不支持 wepy，需要手动替换所使用的 wepy.xxx()方法�
 1. [Babylon-AST 初探-代码生成(Create)](https://summerrouxin.github.io/2018/05/22/ast-create/Javascript-Babylon-AST-create/) 系列文章(作者是个程序媛噢~)
 1. [Babel 插件手册](https://github.com/jamiebuilds/babel-handbook/blob/master/translations/zh-Hans/plugin-handbook.md#toc-inserting-into-a-container) 中文版 Babel 插件手册
 1. [Babel 官网](https://babeljs.io/docs/en/babel-types) 有问题直接阅读官方文档哈
+1. [微信小程序转换 uni-app 详细指南、小程序转 uni-app 转换器、wepy 转 uni-app](https://ask.dcloud.net.cn/article/35786)
 
 ## LICENSE
 
