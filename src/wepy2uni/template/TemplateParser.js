@@ -75,16 +75,16 @@ class TemplateParser {
   astOptimizer(childNodes) {
     for (const key in childNodes) {
       let item = childNodes[key];
-      if (item.attributes) {
-        for (let i = 0; i < item.attributes.length; i++) {
-          const attributes = item.attributes[i];
-          let name = attributes["name"];
-          let value = attributes["value"];
-          if (name == value) {
-            attributes["value"] = "";
-          }
-        }
-      }
+      // if (item.attributes) {
+      //   for (let i = 0; i < item.attributes.length; i++) {
+      //     const attributes = item.attributes[i];
+      //     let name = attributes["name"];
+      //     let value = attributes["value"];
+      //     if (name == value) {
+      //       attributes["value"] = "";
+      //     }
+      //   }
+      // }
       if (item.childNodes && item.childNodes.length) {
         this.astOptimizer(item.childNodes);
       }

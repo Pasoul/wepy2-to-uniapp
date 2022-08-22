@@ -66,12 +66,10 @@ async function templateHandle(v, fileDir, filename, targetFilePath) {
       //去掉命名空间及标志
       templateContent = utils.restoreTagAndEventBind(templateContent);
       templateContent = utils.decode(templateContent);
-
       //生成语法树
       templateParser.parse(templateContent).then((templateAst) => {
         //判断根标签上是否包含wx:for或v-for
         let isMultiTag = checkMultiTag(templateAst);
-
         //进行上述目标的转换
         let convertedTemplate = templateConverter(templateAst);
         //把语法树转成文本

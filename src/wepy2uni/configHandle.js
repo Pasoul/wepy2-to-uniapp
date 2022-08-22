@@ -88,6 +88,11 @@ async function configHandle(appConfig, pageConfigs, miniprogramRoot, targetSrcFo
         fs.copySync(sourceImages, staticImages)
         fs.removeSync(path.join(global.targetSrcFolder, 'images'))
       }
+      // start分包下的图片路径处理
+      const startPackageImages = path.join(global.targetSrcFolder, 'pages/start/images')
+      if (fs.existsSync(startPackageImages)) {
+        fs.rename(startPackageImages, path.join(global.targetSrcFolder, 'pages/start/static'))
+      }
 
       if (tabBar && tabBar.list && tabBar.list.length) {
         for (const key in tabBar.list) {
@@ -148,6 +153,7 @@ async function configHandle(appConfig, pageConfigs, miniprogramRoot, targetSrcFo
       ////////////////////////////write main.js/////////////////////////////
       let mainContent = "import Vue from 'vue';\r\n"
       mainContent += "import App from './App';\r\n\r\n"
+      mainContent += "import store from './store';\r\n\r\n"
 
       //全局引入自定义组件
       //import firstcompoent from '../firstcompoent/firstcompoent'
@@ -170,6 +176,7 @@ async function configHandle(appConfig, pageConfigs, miniprogramRoot, targetSrcFo
       mainContent += 'Vue.config.productionTip = false;\r\n\r\n'
       mainContent += "App.mpType = 'app';\r\n\r\n"
       mainContent += 'const app = new Vue({\r\n'
+      mainContent += '    store,\r\n'
       mainContent += '    ...App\r\n'
       mainContent += '});\r\n'
       mainContent += 'app.$mount();\r\n'

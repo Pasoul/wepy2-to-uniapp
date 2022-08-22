@@ -163,7 +163,12 @@ async function filesHandle(fileText, filePath, targetFile, isApp) {
       fileContent.script = script
     }
     if (v.nodeName === 'wxs') {
-      fileContent.wxs += `${v.toString()}\r\n`
+      let wxsContent = utils.restoreTagAndEventBind(v.toString())
+      wxsContent = wxsContent.replace(/<wxs/gm, '<script')
+      .replace(/<\/wxs>/gm, '</script>')
+      .replace(/lang=["']babel["']/, 'lang="wxs"')
+      .replace(/~@\/wxs\/utils\/wxs/gm, '@/wxs/utils/wxs')
+      fileContent.wxs += `${wxsContent}\r\n`
     }
   }
   //
@@ -233,7 +238,7 @@ async function transform(sourceFolder, targetFolder) {
   utils.log('targetFolder = ' + global.targetFolder, 'log')
   // 先清空编译目录
   if (fs.existsSync(global.targetFolder)) {
-    pathUtil.emptyDirSyncEx(global.targetFolder, ['node_modules', '.git'])
+    pathUtil.emptyDirSyncEx(global.targetFolder, ['node_modules', '.git', '.gitignore'])
   } else {
     fs.mkdirSync(global.targetFolder)
   }
