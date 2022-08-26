@@ -1,3 +1,6 @@
+const utils = require('../../utils/utils.js')
+const pathUtil = require('../../utils/pathUtil.js')
+
 //html标签替换规则，可以添加更多
 const tagConverterConfig = {
   // 'view': 'div',
@@ -120,7 +123,7 @@ function checkExp(str) {
 }
 
 //替换入口方法
-const templateConverter = function(ast) {
+const templateConverter = function(ast, filePath) {
   let reg_tag = /{{.*?}}/ //注：连续test时，这里不能加/g，因为会被记录上次index位置
   for (let i = 0; i < ast.length; i++) {
     let node = ast[i]
@@ -129,6 +132,15 @@ const templateConverter = function(ast) {
       //进行标签替换
       if (tagConverterConfig[node.name]) {
         node.name = tagConverterConfig[node.name]
+      }
+      // 组件名称转换
+      let route = pathUtil.getRouteByFilePath(filePath)
+      let usingComponents = global.pageUsingComponents[route]
+      if (usingComponents) {
+        let keys = Object.keys(usingComponents)
+        if (keys.includes(node.name)) {
+          node.name = utils.replaceCompName(node.name)
+        }
       }
       //进行属性替换
       let attrs = {}
@@ -190,7 +202,10 @@ const templateConverter = function(ast) {
            *
            * 情况五：
            * <block wx:for="{{ workspaces }}" wx:for-item="workspace" wx:for-index="spaceIndex" wx:key="ouid" data-index="{{ spaceIndex }}"></block>
+           * 
+           * 暂不考虑多层嵌套循环场景
            */
+          let wx_index = node.attribs['wx:for-index'] || 'index'
 
           //这里预先设置wx:for是最前面的一个属性，这样会第一个被遍历到
           let wx_key = node.attribs['wx:key']
@@ -206,41 +221,28 @@ const templateConverter = function(ast) {
           //替换{{}}
           if (wx_key) {
             wx_key = wx_key.trim()
+            // "{{ index }}" => 'index'
             wx_key = wx_key.replace(/{{ ?(.*?) ?}}/, '$1').replace(/\"/g, "'")
           }
-          //------------处理wx:key------------
-          //查找父级的key
-          let pKey = findParentsWithFor(node)
-          if (pKey && pKey.indexOf('index') > -1) {
-            let count = pKey.split('index').join('')
-            if (count) {
-              count = parseInt(count)
-            } else {
-              count = 1 //如果第一个找到的父级的key为index时，则默认为1
-            }
-            count++ //递增
-            wx_key = wx_key && pKey != wx_key ? wx_key : 'index' + count
-          } else {
-            wx_key = wx_key ? wx_key : 'index'
-          }
-          //修复index，防止使用的item.id来替换index
-          let newKey = wx_key.indexOf('.') == -1 ? wx_key : 'index'
-
           //设置for-item默认值
           wx_forItem = wx_forItem ? wx_forItem : 'item'
 
           if (value) {
             //将双引号转换单引号
             value = value.replace(/\"/g, "'")
-            value = value.replace(/{{ ?(.*?) ?}}/, '(' + wx_forItem + ', ' + newKey + ') in $1')
+            value = value.replace(/{{ ?(.*?) ?}}/, '(' + wx_forItem + ', ' + wx_index + ') in $1')
 
             if (value == node.attribs[k]) {
               //奇葩!!! 小程序写起来太自由了，相比js有过之而无不及，{{}}可加可不加……我能说什么？
               //这里处理无{{}}的情况
-              value = '(' + wx_forItem + ', ' + newKey + ') in ' + value
+              value = '(' + wx_forItem + ', ' + wx_index + ') in ' + value
             }
 
             attrs['v-for'] = value
+            let newKey = wx_key || 'index'
+            if (newKey !== wx_index && newKey !== wx_forItem && newKey !== 'index' ) {
+              newKey = `${wx_forItem}.${newKey}`
+            }
             attrs[':key'] = newKey
             if (node.attribs.hasOwnProperty('wx:key')) delete node.attribs['wx:key']
             if (node.attribs.hasOwnProperty('wx:for-index')) delete node.attribs['wx:for-index']
@@ -320,7 +322,7 @@ const templateConverter = function(ast) {
     }
     //因为是树状结构，所以需要进行递归
     if (node.children) {
-      templateConverter(node.children)
+      templateConverter(node.children, filePath)
     }
   }
   return ast

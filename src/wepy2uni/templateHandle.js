@@ -46,7 +46,7 @@ function checkMultiTag(ast) {
  * @param {*} fileData wxml文件内容
  * @param {*} file_wxml 当前操作的文件路径
  */
-async function templateHandle(v, fileDir, filename, targetFilePath) {
+async function templateHandle(v, filePath, filename, targetFilePath) {
   try {
     return await new Promise((resolve, reject) => {
       //初始化一个解析器
@@ -71,7 +71,7 @@ async function templateHandle(v, fileDir, filename, targetFilePath) {
         //判断根标签上是否包含wx:for或v-for
         let isMultiTag = checkMultiTag(templateAst);
         //进行上述目标的转换
-        let convertedTemplate = templateConverter(templateAst);
+        let convertedTemplate = templateConverter(templateAst, filePath);
         //把语法树转成文本
         templateConvertedString = templateParser.astToString(convertedTemplate);
 

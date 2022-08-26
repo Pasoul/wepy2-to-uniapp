@@ -328,6 +328,13 @@ var replaceEndTag = function(str) {
     .replace(/><\/image>/g, "/>")
     .replace(/><\/br>/g, "/>")
 };
+// 组件名中划线转驼峰，并且首字母大写
+var replaceCompName = function(name) {
+  const toCamelKey = toCamel2(name).replace(/^[a-z]/, ($1) => {
+      return $1.toUpperCase()
+  })
+  return toCamelKey
+}
 
 module.exports = {
   log,
@@ -345,4 +352,5 @@ module.exports = {
   restoreTagAndEventBind,
   jsStringToJson,
   replaceEndTag,
+  replaceCompName
 };

@@ -248,8 +248,8 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
         let keys = Object.keys(usingComponents)
         let values = Object.values(usingComponents)
         for (let i = 0; i < keys.length; i++) {
-          // 中划线转驼峰
-          const toCamelKey = utils.toCamel2(keys[i])
+          // 中划线转驼峰，首字母大写
+          const toCamelKey = utils.replaceCompName(keys[i])
           const value = values[i].replace(/~@/gm, '@')
           importStr += `import ${toCamelKey} from "${value}"\r\n`
           importComponents.push(t.objectProperty(t.identifier(toCamelKey), t.identifier(toCamelKey), false, true))
