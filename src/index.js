@@ -248,7 +248,7 @@ async function transform(sourceFolder, targetFolder) {
   }
   totalFileCount = pathUtil.readFileList(miniprogramRoot, []).length
   traverseFolder(miniprogramRoot, miniprogramRoot, global.targetSrcFolder, () => {
-    console.log('被执行了')
+    console.log('执行configHandle')
     configHandle(global.appConfig, global.pageConfigs, global.miniprogramRoot, global.targetSrcFolder)
     vueCliHandle(configData, global.targetFolder, global.targetSrcFolder)
   })

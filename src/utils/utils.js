@@ -335,6 +335,10 @@ var replaceCompName = function(name) {
   })
   return toCamelKey
 }
+var type = function(data) {
+  var toString = Object.prototype.toString;
+  return toString.call(data).replace(/\[object\s(.+)\]/, '$1')
+}
 
 module.exports = {
   log,
@@ -352,5 +356,6 @@ module.exports = {
   restoreTagAndEventBind,
   jsStringToJson,
   replaceEndTag,
-  replaceCompName
+  replaceCompName,
+  type
 };

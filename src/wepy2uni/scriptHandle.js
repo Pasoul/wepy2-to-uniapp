@@ -89,56 +89,160 @@ const componentTemplateBuilder = function(ast, vistors, filePath, isApp, importC
     // LIFECYCLE: arrayToObject(vistors.lifeCycle.getData(), "lifeCycle"),
   })
 
-  //获取配置
-  // let config = vistors.config.getData();
-  // let oe = t.objectExpression(config); //需要先转成objectExpression才能转成字符串
-  // let code = generate(oe).code;
-  // let object = null;
-  // try {
-  //   object = eval("(" + code + ")"); //非标准json，使用JSON.parse()无法转换
-  // } catch (error) {
-  //   console.log("config解析失败，file: " + filePath);
-  // }
-
-  // if (object) {
-  //   if (isApp) {
-  //     // global.appConfig = object;
-  //   } else {
-  //     let extname = path.extname(filePath).toLowerCase();
-  //     let fileNameNoExt = pathUtil.getFileNameNoExt(filePath);
-  //     let relativePath = path.relative(global.sourceFolder, filePath);
-  //     relativePath = relativePath.split(extname).join("");
-  //     const key = relativePath.split("\\").join("/");
-
-  //     //判断是否有引用自定义组件
-  //     if (
-  //       !object.usingComponents ||
-  //       JSON.stringify(object.usingComponents) == "{}"
-  //     ) {
-  //       object.usingComponents = {};
-  //     }
-
-  //     //处理根路径
-  //     for (const kk in object.usingComponents) {
-  //       let value = object.usingComponents[kk];
-  //       //plugin是微信自定义组件
-  //       if (value.indexOf("plugin:") == -1) {
-  //         let fileDir = path.dirname(filePath);
-  //         value = pathUtil.relativePath(value, global.miniprogramRoot, fileDir);
-  //         global.pageUsingComponents[kk] = value;
-  //       }
-  //     }
-
-  //     delete object.usingComponents;
-  //     //
-  //     global.pageConfigs[key] = object;
-  //   }
-  // }
   traverse(ast, {
     noScope: true,
     ObjectProperty(path) {
       const name = path.node.key.name
       switch (name) {
+        case 'props':
+          /**
+           * 处理props，常见的wepy
+           * 写法1：key/value格式
+           * list: []
+           * 转换为：
+           * list: {
+           *   type: Array,
+           *   default: () => []
+           * }
+           * 转换思路：判断value类型，使用default返回默认value
+           * 写法2：有type，有value
+           * isShowFooter: {
+           *   type: Boolean,
+           *   value: false,
+           * }
+           * 转换为：
+           * isShowFooter: {
+           *   type: Boolean,
+           *   default: false,
+           * }
+           * 转换思路：保留type，使用default返回默认value
+           * 写法3：有type无value
+           * index: {
+           *   type: Number
+           * },
+           * 转换为：
+           * index: {
+           *   type: Number,
+           * },
+           * 转换思路：保留type，没有default
+           * 写法四：
+           * processId: String
+           * 转换为：
+           * processId: {
+           *  type: String
+           * }
+           * 同上
+           * 写法五：有type和default
+           * type: {
+           *   type: String,
+           *   default: 'card',
+           * },
+           * 转换思路：保留type和default
+           * 写法六：
+           * alertField: {
+           *   title: "",
+           *   placeholder: "审批驳回原因为必填，200字以内",
+           * }
+           * 转换为：
+           * alertField: {
+           *  type: Object,
+           *  default: () => {
+           *    return {
+           *      // ...
+           *    }
+           *  }
+           * }
+           */
+          path.node.value.properties.forEach(item => {
+            // console.log(item.value)
+            // 如果是数组写法
+            if (t.isArrayExpression(item.value)) {
+              item.value = t.objectExpression([
+                t.objectProperty(t.identifier('type'), t.identifier('Array')),
+                t.objectProperty(
+                  t.identifier('default'),
+                  t.arrowFunctionExpression(
+                    [t.identifier('()')],
+                    t.blockStatement([t.returnStatement(t.arrayExpression(item.value.elements))])
+                  )
+                ),
+              ])
+            }
+            // 如果是对象写法
+            if (t.isObjectExpression(item.value)) {
+              const properties = item.value.properties
+              // 如果是空对象
+              if (!properties.length) {
+                item.value = t.objectExpression([
+                  t.objectProperty(t.identifier('type'), t.identifier('Object')),
+                  t.objectProperty(
+                    t.identifier('default'),
+                    t.arrowFunctionExpression([t.identifier('()')], t.blockStatement([t.returnStatement(t.identifier('{}'))]))
+                  ),
+                ])
+              } else {
+                // 取出type、value、default属性
+                const type = properties.find(v => v.key.name === 'type')
+                const value = properties.find(v => v.key.name === 'value')
+                const defaultValue = properties.find(v => v.key.name === 'default')
+                const newDefault = defaultValue || value
+                // 如果定义了type属性
+                if (type) {
+                  const arr = [type]
+                  if (newDefault) {
+                    // 如果value是[]或者{},写成函数return方式
+                    if (t.isArrayExpression(newDefault.value) || t.isObjectExpression(newDefault.value)) {
+                      arr.push(
+                        t.objectProperty(
+                          t.identifier('default'),
+                          t.arrowFunctionExpression([t.identifier('()')], t.blockStatement([t.returnStatement(newDefault.value)]))
+                        )
+                      )
+                    } else {
+                      arr.push(t.objectProperty(t.identifier('default'), newDefault.value))
+                    }
+                  }
+                  item.value = t.objectExpression(arr)
+                } else {
+                  // 否则就是普通的对象
+                  item.value = t.objectExpression([
+                    t.objectProperty(t.identifier('type'), t.identifier('Object')),
+                    t.objectProperty(
+                      t.identifier('default'),
+                      t.arrowFunctionExpression([t.identifier('()')], t.blockStatement([t.returnStatement(item.value)]))
+                    ),
+                  ])
+                }
+              }
+            }
+            // 如果是标识符写法：Function、Array、Number等
+            if (t.isIdentifier(item.value)) {
+              item.value = t.objectExpression([t.objectProperty(t.identifier('type'), t.identifier(item.value.name))])
+            }
+            // 如果是字符串
+            if (t.isStringLiteral(item.value)) {
+              item.value = t.objectExpression([
+                t.objectProperty(t.identifier('type'), t.identifier(utils.type(item.value.value))),
+                t.objectProperty(t.identifier('default'), t.stringLiteral(item.value.value)),
+              ])
+            }
+            // 如果是数字
+            if (t.isNumericLiteral(item.value)) {
+              item.value = t.objectExpression([
+                t.objectProperty(t.identifier('type'), t.identifier(utils.type(item.value.value))),
+                t.objectProperty(t.identifier('default'), t.numericLiteral(item.value.value)),
+              ])
+            }
+            // 如果是字符串
+            if (t.isBooleanLiteral(item.value)) {
+              item.value = t.objectExpression([
+                t.objectProperty(t.identifier('type'), t.identifier(utils.type(item.value.value))),
+                t.objectProperty(t.identifier('default'), t.booleanLiteral(item.value.value)),
+              ])
+            }
+          })
+          // console.log(path.node.value.properties);
+          break
         case 'components':
           importComponents.forEach(item => {
             path.node.value.properties.push(item)
@@ -265,7 +369,9 @@ async function scriptHandle(v, filePath, targetFilePath, isApp) {
         //放到预先定义好的模板中
         convertedJavascript = componentTemplateBuilder(convertedJavascript, vistors, filePath, isApp, importComponents)
         //生成文本并写入到文件
-        let codeText = `<script>\r\n${declareStr}\r\n${generate(convertedJavascript).code}\r\n</script>\r\n`
+        let codeText = `<script>\r\n${declareStr}\r\n${
+          generate(convertedJavascript, { jsescOption: { minimal: true } }).code
+        }\r\n</script>\r\n`
         resolve(codeText)
       })
     })
