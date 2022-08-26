@@ -153,6 +153,7 @@ const componentTemplateBuilder = function(ast, vistors, filePath, isApp, importC
            *  }
            * }
            */
+          // console.log(filePath)
           path.node.value.properties.forEach(item => {
             // console.log(item.value)
             // 如果是数组写法
@@ -198,6 +199,8 @@ const componentTemplateBuilder = function(ast, vistors, filePath, isApp, importC
                           t.arrowFunctionExpression([t.identifier('()')], t.blockStatement([t.returnStatement(newDefault.value)]))
                         )
                       )
+                    } else if (t.isObjectMethod(newDefault)) {
+                      arr.push(t.objectProperty(t.identifier('default'), t.arrowFunctionExpression([t.identifier('()')], newDefault.body)))
                     } else {
                       arr.push(t.objectProperty(t.identifier('default'), newDefault.value))
                     }
