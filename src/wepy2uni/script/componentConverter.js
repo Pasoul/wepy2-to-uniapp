@@ -6,6 +6,13 @@ const Vistor = require("./Vistor");
 const clone = require("clone");
 const template = require("@babel/template").default;
 
+// 声明周期替换规则，可以添加更多
+const lifeCycleConverterConfig = {
+  'attached': 'mounted',
+  'ready': 'mounted',
+  'detached': 'destroyed'
+}
+
 const lifeCycleFunction = {
   // App生命周期
   onLaunch: true,
@@ -164,6 +171,9 @@ const componentVistor = {
                 break;
               default:
                 if (lifeCycleFunction[name]) {
+                  if (lifeCycleConverterConfig[name]) {
+                    item.key.name = lifeCycleConverterConfig[name]
+                  }
                   vistors.lifeCycle.handle(item);
                 }
                 break;
