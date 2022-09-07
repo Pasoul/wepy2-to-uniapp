@@ -202,7 +202,7 @@ const templateConverter = function(ast, filePath) {
            *
            * 情况五：
            * <block wx:for="{{ workspaces }}" wx:for-item="workspace" wx:for-index="spaceIndex" wx:key="ouid" data-index="{{ spaceIndex }}"></block>
-           * 
+           *
            * 暂不考虑多层嵌套循环场景
            */
           let wx_index = node.attribs['wx:for-index'] || 'index'
@@ -240,7 +240,7 @@ const templateConverter = function(ast, filePath) {
 
             attrs['v-for'] = value
             let newKey = wx_key || 'index'
-            if (newKey !== wx_index && newKey !== wx_forItem && newKey !== 'index' ) {
+            if (newKey !== wx_index && newKey !== wx_forItem && newKey !== 'index') {
               newKey = `${wx_forItem}.${newKey}`
             }
             attrs[':key'] = newKey
@@ -304,15 +304,12 @@ const templateConverter = function(ast, filePath) {
             //将双引号转换单引号（这里还有问题----------------------------）
             value = value.replace(/\"/g, "'")
 
-            //如果value={{true}}或value={{false}}，则不添加bind
-            if (newKey == k && value !== 'true' && value !== 'false') {
+            if (newKey == k) {
               //处理<view style="display:{{}}"></view>，转换后，可能末尾多余一个+，编译会报错
               if (/\+$/.test(value)) value = value.replace(/\s*\+$/, '')
               //
               attrs[':' + newKey] = value
               delete attrs[newKey]
-            } else {
-              attrs[newKey] = value
             }
           }
         }
